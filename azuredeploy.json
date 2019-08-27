@@ -28,7 +28,7 @@
       "metadata": {
         "description": "Size of the S2D VMs to be created"
       },
-      "defaultValue": "Standard_D2S_v2"
+      "defaultValue": "Standard_DS2_v2"
     },
     "vmCount": {
       "type": "int",
