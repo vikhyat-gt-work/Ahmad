@@ -141,10 +141,10 @@
     "vmNamePrefix": "[concat(parameters('namePrefix'),'-s2d-')]",
     "vmAvailabilitySetName": "[concat(variables('vmNamePrefix'),'as')]",
     "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
-    "vmLoopTemplateURL": "https://raw.githubusercontent.com/vikhyat-gt-work/Ahmad/master/nestedtemplates/newvm.json",
-    "s2dPrepModulesURL": "https://raw.githubusercontent.com/vikhyat-gt-work/Ahmad/master/dsc/prep-s2d.ps1.zip",
+    "vmLoopTemplateURL": "https://raw.githubusercontent.com/vikhyat-gt-work/allan/master/nestedtemplates/newvm.json",
+    "s2dPrepModulesURL": "https://raw.githubusercontent.com/vikhyat-gt-work/allan/master/dsc/prep-s2d.ps1.zip",
     "s2dPrepFunction": "PrepS2D.ps1\\PrepS2D",
-    "s2dConfigModulesURL": "https://raw.githubusercontent.com/vikhyat-gt-work//Ahmad/master/dsc/config-s2d.ps1.zip",
+    "s2dConfigModulesURL": "https://raw.githubusercontent.com/vikhyat-gt-work/allan/master/dsc/config-s2d.ps1.zip",
     "s2dConfigFunction": "ConfigS2D.ps1\\ConfigS2D"
   },
   "resources": [
