@@ -59,7 +59,7 @@
         }
     },
     "variables": {
-        "diskSelectionTemplateUri": "https://raw.githubusercontent.com/vikhyat-gt-work/Ahmad/master/nestedtemplates/diskselection.json"
+        "diskSelectionTemplateUri": "https://raw.githubusercontent.com/vikhyat-gt-work/allan/master/nestedtemplates/diskselection.json"
     },
     "resources": [
         {

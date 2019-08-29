@@ -28,7 +28,7 @@
       "metadata": {
         "description": "Size of the S2D VMs to be created"
       },
-      "defaultValue": "Standard_DS2_v2"
+      "defaultValue": "Standard_D2S_v2"
     },
     "vmCount": {
       "type": "int",
@@ -126,7 +126,7 @@
       "metadata": {
         "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
       },
-      "defaultValue": "https://github.com/vikhyat-gt-work/Ahmad.git"
+      "defaultValue": "https://github.com/vikhyat-gt-work/allan.git"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -138,7 +138,7 @@
   },
   "variables": {
     "subnetRef": "[resourceId(parameters('existingVirtualNetworkRGName'),'Microsoft.Network/virtualNetworks/subnets',parameters('existingVirtualNetworkName'),parameters('existingSubnetName'))]",
-    "deployS2DClusterTemplateURL": "https://raw.githubusercontent.com/vikhyat-gt-work/Ahmad/master/nestedtemplates/deploy-s2d-cluster.json",
+    "deployS2DClusterTemplateURL": "https://raw.githubusercontent.com/vikhyat-gt-work/allan/master/nestedtemplates/deploy-s2d-cluster.json",
     "deployS2DCluster": "deployS2DCluster"
   },
   "resources": [
