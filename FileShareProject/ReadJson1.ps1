@@ -11,3 +11,6 @@ $file.Successful = $LogTime
 $file.Current = $LogTime 
 
 $file | ConvertTo-Json | Out-File -FilePath $filePath -Encoding utf8 -Force
+
+
+
