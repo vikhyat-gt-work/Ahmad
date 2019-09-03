@@ -14,8 +14,9 @@ Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 
-$SourceDir= "C:\Testing\backup"
-$DestDir= "C:\Testing\NewLocation"
+#$SourceDir= "C:\Testing\backup"
+$SourceDir=  "C:\Windows\System32"
+$DestDir= "C:\Testing\NewLocation7"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
 $logFile = 'C:\Temp\'+"JSON_FileShare_$LogTime.log"
 
@@ -47,19 +48,28 @@ Function WriteJson ([String] $Value ,
     $file | ConvertTo-Json | Out-File -FilePath $OpsFile -Encoding utf8 -Force
 }
 
+
+
+
 try{
     # Read the last sucessful timestamp
     $SucessTime = ReadJson "Current"
-    # --- 
+    # --- By inclusing /MT:32, we are dicating a thread of 32. to change the number of retries, use the /R switch, 
+    #and to change the wait time between retries, use the /W switch. 
     #throw [System.IO.FileNotFoundException] "$file not found."
-    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /R:2 /V /NP /Tee /LOG:$LogFile
+    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:1 /Tee /LOG:$LogFile
     
     $LogTime = (Get-Date).ToString('yyyyMMdd')
     #
     WriteJson $LogTime $true
 }
 catch {
-    # there was a failure.
+        
+    # there was a failure. 
     $LogTime = (Get-Date).ToString('yyyyMMdd')
     WriteJson $LogTime $false
+        
 }
+
+
+
