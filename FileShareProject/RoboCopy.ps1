@@ -14,9 +14,6 @@ Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 
-
-
-
 $SourceDir= "C:\Testing\backup"
 $DestDir= "C:\Testing\NewLocation"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
@@ -53,16 +50,16 @@ Function WriteJson ([String] $Value ,
 try{
     # Read the last sucessful timestamp
     $SucessTime = ReadJson "Current"
-
-    $SucessTime = '{0:yyyyMMdd}' -f $SucessTime
-
-    robocopy.exe C:\Testing\backup C:\Testing\NewLocation  /MAXAGE:"20190730" /ZB /COPYALL /MIR /R:2 /V /NP /Tee /LOG:$LogFile
-
-
-    $LogTime = Get-Date -Format "yyyymmdd"
-
-    WriteJson $LogTime
-}
-catch (){
+    # --- 
+    #throw [System.IO.FileNotFoundException] "$file not found."
+    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /R:2 /V /NP /Tee /LOG:$LogFile
     
+    $LogTime = (Get-Date).ToString('yyyyMMdd')
+    #
+    WriteJson $LogTime $true
+}
+catch {
+    # there was a failure.
+    $LogTime = (Get-Date).ToString('yyyyMMdd')
+    WriteJson $LogTime $false
 }
