@@ -19,13 +19,24 @@ $SourceDir=  "C:\Windows\System32"
 $DestDir= "C:\Testing\NewLocation13"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
 $logFile = 'C:\Temp\'+"JSON_FileShare_$LogTime.log"
-$RefDate = '20000101'
+$RefDate = '18710101'
 $Sucess = "Sucessfull Operation"
 $Running = "Running"
 $ErrorMsg = "Error"
 $Successful = "Successful"
 $Current = "Current"
 $Status = "Status"
+$ServerList  = ""
+
+enum Status
+{
+    Complete
+    Running
+    Stopped
+    Exception
+    Warnings
+}
+
 
 Function InitJson ([String] $ServerName)
 {
@@ -53,7 +64,9 @@ Function ReadJson ([String] $ServerName)
 Function WriteJson ([String] $ServerName,
                     [String] $Value ,
                     [String] $OpsStatus,
-                    [String] $Msg)
+                    [String] $ErrCode,
+                    [String] $Msg
+                    )
 {
     $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
 
@@ -72,7 +85,9 @@ Function WriteJson ([String] $ServerName,
     }else{
        # the operation was not sucess. Set current only the today's date to indicate a failure. The next run, will use sucessful to carry on.
         $file.Current = $Value 
-        $file.Status = $Msg
+        $file.Status = $OpsStatus
+        $file.RoboCopyExitCode = $ErrCode
+        $file.ErrDesc = $Msg
     }
 
     # Close the json file
@@ -96,12 +111,23 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         # --- Set the start point of the process
         WriteJson $ServerName $LogTime $Running 
 
-        throw [System.IO.FileNotFoundException] "$A fuilure has occured."
-        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$LogFile
-    
+        $ServerLogFile = $ServerName + $LogFile
+
+        #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
+        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$ServerLogFile
+        
         $LogTime = (Get-Date).ToString('yyyyMMdd')
-        #
-        WriteJson $ServerName $LogTime $Sucess
+        if ($lastexitcode -eq 0)
+        {
+              WriteJson $ServerName $LogTime $Complete $lastexitcode $Sucess
+        }
+        else
+        {
+             WriteJson $ServerName $LogTime $Warnings   "Robocopy failed with exit code:" $lastexitcode
+        }
+
+        
+        
     }
     catch [System.IO.DirectoryNotFoundException],[System.IO.FileNotFoundException]
     {
@@ -128,4 +154,13 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
     }
 
 
+}
+
+
+# --- Here based on the list of servers (read from a text or json file), within a loop, the above function is called that in return will call the operation on each servers.
+foreach($line in Get-Content $logFile) {
+    if($line -match $regex){
+        ## Read the content of a json file that holds the names of the servers along with the path to the location of the files on the servers.
+        ProcessRoboCopy $ServerName $SourceDir $DestDir
+    }
 }

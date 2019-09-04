@@ -16,7 +16,7 @@ Write-Output "++++++++++++++++++++++++++++++++"
 
 #$SourceDir= "C:\Testing\backup"
 $SourceDir=  "C:\Windows\System32"
-$DestDir= "C:\Testing\NewLocation13"
+$DestDir= "C:\Testing\NewLocation14"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
 $logFile = 'C:\Temp\'+"JSON_FileShare_$LogTime.log"
 $RefDate = '20000101'
@@ -95,7 +95,14 @@ try{
 
     #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
     robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$LogFile
-    
+ if ($lastexitcode -eq 0)
+ {
+      write-host "Robocopy succeeded"
+ }
+else
+{
+      write-host "Robocopy failed with exit code:" $lastexitcode
+}
     $LogTime = (Get-Date).ToString('yyyyMMdd')
     #
     WriteJson $LogTime $Sucess
