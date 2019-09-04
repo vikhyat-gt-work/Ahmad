@@ -27,7 +27,7 @@ $Successful = "Successful"
 $Current = "Current"
 $Status = "Status"
 
-Function InitJson ()
+Function InitJson ([String] $ServerName)
 {
     $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
 
@@ -42,7 +42,7 @@ Function InitJson ()
 }
 
 
-Function ReadJson ()
+Function ReadJson ([String] $ServerName)
 {
     #  Read the Record file name for Sucessful timestamp
     $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
@@ -50,7 +50,8 @@ Function ReadJson ()
     Return $file.Successful 
 }
 
-Function WriteJson ([String] $Value ,
+Function WriteJson ([String] $ServerName,
+                    [String] $Value ,
                     [String] $OpsStatus,
                     [String] $Msg)
 {
@@ -80,48 +81,51 @@ Function WriteJson ([String] $Value ,
 
 
 
-
-try{
-    #--- Make sure flags are reset
-    InitJson
-
-    # Read the last sucessful timestamp
-    $SucessTime = ReadJson 
-    # --- By inclusing /MT:32, we are dicating a thread of 32. to change the number of retries, use the /R switch, 
-    #and to change the wait time between retries, use the /W switch. 
-
-    # --- Set the start point of the process
-    WriteJson $LogTime $Running 
-
-    #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
-    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$LogFile
-    
-    $LogTime = (Get-Date).ToString('yyyyMMdd')
-    #
-    WriteJson $LogTime $Sucess
-}
-catch [System.IO.DirectoryNotFoundException],[System.IO.FileNotFoundException]
+Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $DestDir)
 {
-    # there was a failure. 
-    $LogTime = (Get-Date).ToString('yyyyMMdd')
-    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"
+
+    try{
+        #--- Make sure flags are reset
+        InitJson $ServerName
+
+        # Read the last sucessful timestamp
+        $SucessTime = ReadJson 
+        # --- By inclusing /MT:32, we are dicating a thread of 32. to change the number of retries, use the /R switch, 
+        #and to change the wait time between retries, use the /W switch. 
+
+        # --- Set the start point of the process
+        WriteJson $ServerName $LogTime $Running 
+
+        throw [System.IO.FileNotFoundException] "$A fuilure has occured."
+        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$LogFile
     
-}
-catch [System.IO.IOException]
-{
-    # there was a failure. 
-    $LogTime = (Get-Date).ToString('yyyyMMdd')
-    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , IO error exception has occured."
+        $LogTime = (Get-Date).ToString('yyyyMMdd')
+        #
+        WriteJson $ServerName $LogTime $Sucess
+    }
+    catch [System.IO.DirectoryNotFoundException],[System.IO.FileNotFoundException]
+    {
+        # there was a failure. 
+        $LogTime = (Get-Date).ToString('yyyyMMdd')
+        WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"
+    
+    }
+    catch [System.IO.IOException]
+    {
+        # there was a failure. 
+        $LogTime = (Get-Date).ToString('yyyyMMdd')
+        WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , IO error exception has occured."
     
 
-}
-# --- General Error
-catch {
+    }
+    # --- General Error
+    catch {
         
-    # there was a failure. 
-    $LogTime = (Get-Date).ToString('yyyyMMdd')
-    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , Robocopy operation resulted in an error."
+        # there was a failure. 
+        $LogTime = (Get-Date).ToString('yyyyMMdd')
+        WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , Robocopy operation resulted in an error."
         
-}
+    }
 
 
+}
