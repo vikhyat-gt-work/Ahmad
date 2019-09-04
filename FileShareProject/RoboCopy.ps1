@@ -16,11 +16,34 @@ Write-Output "++++++++++++++++++++++++++++++++"
 
 #$SourceDir= "C:\Testing\backup"
 $SourceDir=  "C:\Windows\System32"
-$DestDir= "C:\Testing\NewLocation7"
+$DestDir= "C:\Testing\NewLocation13"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
 $logFile = 'C:\Temp\'+"JSON_FileShare_$LogTime.log"
+$RefDate = '20000101'
+$Sucess = "Sucessfull Operation"
+$Running = "Running"
+$ErrorMsg = "Error"
 
-Function ReadJson ($Value)
+$Successful = "Successful"
+$Current = "Current"
+$Status = "Status"
+
+Function InitJson ()
+{
+    $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
+
+    if ($file.Successful -eq ""){
+        # --- Json file needs update
+        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
+        $file.Successful = $RefDate 
+        
+        # Close the json file
+        $file | ConvertTo-Json | Out-File -FilePath $OpsFile -Encoding utf8 -Force
+    }
+}
+
+
+Function ReadJson ()
 {
     #  Read the Record file name for Sucessful timestamp
     $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
@@ -29,19 +52,27 @@ Function ReadJson ($Value)
 }
 
 Function WriteJson ([String] $Value ,
-                    [Boolean] $OpsResult)
+                    [String] $OpsStatus,
+                    [String] $Msg)
 {
     $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
 
-    if ($OpsResult){
+    if ($OpsStatus -eq $Sucess){
         # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
         $file.Successful = $Value 
         $file.Current = $Value 
+        $file.Status = $Sucess
 
     }
-    else{
-       # the operation was not sucess. Set current only to the today's date to indicate a failure. The next run, will use sucessful to carry on.
+    elseif ($OpsStatus -eq $Running){
+        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
         $file.Current = $Value 
+        $file.Status = $Running
+
+    }else{
+       # the operation was not sucess. Set current only the today's date to indicate a failure. The next run, will use sucessful to carry on.
+        $file.Current = $Value 
+        $file.Status = $Msg
     }
 
     # Close the json file
@@ -52,24 +83,46 @@ Function WriteJson ([String] $Value ,
 
 
 try{
+    #--- Make sure flags are reset
+    InitJson
+
     # Read the last sucessful timestamp
-    $SucessTime = ReadJson "Current"
+    $SucessTime = ReadJson 
     # --- By inclusing /MT:32, we are dicating a thread of 32. to change the number of retries, use the /R switch, 
     #and to change the wait time between retries, use the /W switch. 
-    #throw [System.IO.FileNotFoundException] "$file not found."
-    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:1 /Tee /LOG:$LogFile
+
+    # --- Set the start point of the process
+    WriteJson $LogTime $Running 
+
+    throw [System.IO.FileNotFoundException] "$A fuilure has occured."
+    robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$LogFile
     
     $LogTime = (Get-Date).ToString('yyyyMMdd')
     #
-    WriteJson $LogTime $true
+    WriteJson $LogTime $Sucess
 }
+catch [System.IO.DirectoryNotFoundException],[System.IO.FileNotFoundException]
+{
+    # there was a failure. 
+    $LogTime = (Get-Date).ToString('yyyyMMdd')
+    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"
+    
+}
+catch [System.IO.IOException]
+{
+    # there was a failure. 
+    $LogTime = (Get-Date).ToString('yyyyMMdd')
+    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , IO error exception has occured."
+    
+
+}
+# --- General Error
 catch {
         
     # there was a failure. 
     $LogTime = (Get-Date).ToString('yyyyMMdd')
-    WriteJson $LogTime $false
+    WriteJson $LogTime $false  "$ErrorMsg :Date-$LogTime , Robocopy operation resulted in an error."
         
 }
-
 
 
