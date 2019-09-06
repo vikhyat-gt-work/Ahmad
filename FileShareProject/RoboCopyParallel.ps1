@@ -195,7 +195,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         
         $LogTime = (Get-Date).ToString('yyyyMMdd')
         
-          $lastExitDesc = GetRoboCopyCodeDsc  $lastexitcode
+        $lastExitDesc = GetRoboCopyCodeDsc  $lastexitcode
         if ($lastexitcode -eq 0)
         {
               WriteJson $ServerName $MyUUID $LogTime ([OpsStatus]::Complete) $lastexitcode $lastExitDesc $errMsg
