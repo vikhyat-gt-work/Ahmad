@@ -14,21 +14,19 @@ Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 
-#$SourceDir= "C:\Testing\backup"
-$SourceDir=  "C:\Windows\System32"
-$DestDir= "C:\Testing\NewLocation13"
 $OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
 $logFile = "_JSON_FileShare_$LogTime.log"
+$MainLogFile = "MainLog_$LogTime.log" 
 $LogfileDir = 'C:\Temp\' 
 $RefDate = '18710101'
-$Sucess = "Sucessfull Operation"
-$Running = "Running"
-$ErrorMsg = "Error"
-$Successful = "Successful"
-$Current = "Current"
-$Status = "Status"
-$ServerList  = ""
+#$Sucess = "Sucessfull Operation"
+#$Running = "Running"
+#$ErrorMsg = "Error"
+#$Successful = "Successful"
+#$Current = "Current"
+#$Status = "Status"
 
+$MainLogFile = $LogfileDir + $MainLogFile
 enum OpsStatus
 {
     Complete
@@ -86,7 +84,6 @@ Function InitJson ([String] $ServerName)
     }
 }
 
-
 Function ReadJson ([String] $ServerName)
 {
     #  Read the Record file name for Sucessful timestamp
@@ -143,8 +140,52 @@ Function WriteJson ([String] $ServerName,
     }
 }
 
+Function WriteMainLog ([String] $ServerName,
+                    [String] $Time ,
+                    [String] $OpsStatus,
+                    [String] $ErrCode,
+                    [String] $Msg
+                    )
+{
+    try{
+        $file = ([System.IO.File]::ReadAllText($MainLogFile)  | ConvertFrom-Json)
 
+           foreach ($property in $file.PSObject.Properties) {
 
+                if ($property.Value.ServerName -eq $ServerName){
+
+                    if ($OpsStatus -eq $Sucess){
+                        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
+                        $property.Value.Successful = $Value 
+                        $property.Value.Current = $Value 
+                        $property.Value.Status = $Sucess
+                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
+
+                    }
+                    elseif ($OpsStatus -eq $Running){
+                        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
+                        $property.Value.Current = $Value 
+                        $property.Value.Status = $Running
+                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
+
+                    }else{
+                       # the operation was not sucess. Set current only the today's date to indicate a failure. The next run, will use sucessful to carry on.
+                        $property.Value.Current = $Value 
+                        $property.Value.Status = $OpsStatus
+                        $property.Value.RoboCopyExitCode = $ErrCode
+                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
+                        $property.Value.OpsErrDesc = $Msg
+                    }
+
+                }
+            }
+            # Close the json file
+            $file | ConvertTo-Json | Out-File -FilePath $OpsFile -Encoding utf8 -Force
+    }
+    catch {
+        WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"        
+    }
+}
 Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $DestDir)
 {
 
@@ -206,43 +247,29 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         WriteJson $ServerName $LogTime ([OpsStatus]::Exception)   $lastexitcode  $lastExitDesc "$ErrorMsg :Date-$LogTime , Robocopy operation resulted in an error."
         
     }
-
-
 }
 
+try{
+    # --- Check the initialization of the json values
+    InitJson $OpsFile
 
-# --- Check the initialization of the json values
-InitJson $OpsFile
+    # Get file and set som vars
 
-# Get file and set som vars
-
-$file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
+    $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
  
-
-foreach ($property in $file.PSObject.Properties) {
-   
-   Write-Output $property.Value.ServerName
-   Write-Output $property.Value.Successful
-   Write-Output $property.Value.Current
-   Write-Output $property.Value.RoboCopyExitCode
-   Write-Output $property.Value.ErrDesc
-   Write-Output $property.Value.Status
-
-   $SvrName = $property.Value.ServerName
-   $SourceDir = $property.Value.SourceDir
-   $DestDir = $property.Value.DestDir
-
-   ProcessRoboCopy $SvrName $SourceDir $DestDir
+    foreach ($property in $file.PSObject.Properties) {
+ 
+           $SvrName = $property.Value.ServerName
+           $SourceDir = $property.Value.SourceDir
+           $DestDir = $property.Value.DestDir
+           # Looping through the list of servers within the json file and call the RoboProcess 
+           ProcessRoboCopy $SvrName $SourceDir $DestDir
+           $LogTime = (Get-Date).ToString('yyyyMMdd')
+        }
+    WriteMainLog $SvrName $LogTime ([OpsStatus]::Complete) $lastexitcode 
+    }
+ 
+catch {
+            $LogTime = (Get-Date).ToString('yyyyMMdd')
+            WriteMainLog $SvrName $LogTime ([OpsStatus]::Exception) $lastexitcode 
 }
- 
-
-
-
-# --- Here based on the list of servers (read from a text or json file), within a loop, the above function is called that in return will call the operation on each servers.
-
-#foreach($line in Get-Content $logFile) {
-#    if($line -match $regex){
-        ### Read the content of a json file that holds the names of the servers along with the path to the location of the files on the servers.
-        #ProcessRoboCopy $ServerName $SourceDir $DestDir
-    #}
-#}
