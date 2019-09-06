@@ -19,12 +19,7 @@ $logFile = "_JSON_FileShare_$LogTime.log"
 $MainLogFile = "MainLog_$LogTime.log" 
 $LogfileDir = 'C:\Temp\' 
 $RefDate = '18710101'
-#$Sucess = "Sucessfull Operation"
-#$Running = "Running"
-#$ErrorMsg = "Error"
-#$Successful = "Successful"
-#$Current = "Current"
-#$Status = "Status"
+
 
 $MainLogFile = $LogfileDir + $MainLogFile
 enum OpsStatus
@@ -34,6 +29,7 @@ enum OpsStatus
     Stopped
     Exception
     Warnings
+    Error
 }
 
 function GetRoboCopyCodeDsc ([string] $errCode){
@@ -53,12 +49,13 @@ function GetRoboCopyCodeDsc ([string] $errCode){
             16 {$result = 'Serious error. Robocopy did not copy any files.Either a usage error or an error due to insufficient access privileges on the source or destination directories.'}
             default { $result ='Unknown Error code' }
         }
-
+    WriteMainLog $SvrName "GetRoboCopyCodeDsc" $LogTime ([OpsStatus]::Complete) $lastexitcode "Successful operation."
     return $result 
    }
 
    catch{
         WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"        
+        WriteMainLog $SvrName "GetRoboCopyCodeDsc" $LogTime ([OpsStatus]::Exception) $lastexitcode "The operation resulted in an error."
 }
 }
 
@@ -78,8 +75,10 @@ Function InitJson ([String] $ServerName)
         }
         # Close the json file
         $file | ConvertTo-Json | Out-File -FilePath $OpsFile -Encoding utf8 -Force
+        WriteMainLog $SvrName "InitJson" $LogTime ([OpsStatus]::Complete) $lastexitcode "Successful operation."
     }
     catch {
+        WriteMainLog $SvrName "InitJson" $LogTime ([OpsStatus]::Exception) $lastexitcode "The operation resulted in an error."
         WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"        
     }
 }
@@ -141,6 +140,7 @@ Function WriteJson ([String] $ServerName,
 }
 
 Function WriteMainLog ([String] $ServerName,
+                    [String] $Function_ModuleName ,
                     [String] $Time ,
                     [String] $OpsStatus,
                     [String] $ErrCode,
@@ -148,42 +148,13 @@ Function WriteMainLog ([String] $ServerName,
                     )
 {
     try{
-        $file = ([System.IO.File]::ReadAllText($MainLogFile)  | ConvertFrom-Json)
+        $DateTime = (get-date).toString("r")
+        $LogMsg  = "TimeStamp: $DateTime  `r`nServer Name:  $ServerName `r`nFunction or Module Name: $Function_ModuleName `r`nStatus: $OpsStatus `r`nPossible Error Code: $ErrCode `r`nMessage: $Msg `r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++"
 
-           foreach ($property in $file.PSObject.Properties) {
-
-                if ($property.Value.ServerName -eq $ServerName){
-
-                    if ($OpsStatus -eq $Sucess){
-                        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
-                        $property.Value.Successful = $Value 
-                        $property.Value.Current = $Value 
-                        $property.Value.Status = $Sucess
-                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
-
-                    }
-                    elseif ($OpsStatus -eq $Running){
-                        # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
-                        $property.Value.Current = $Value 
-                        $property.Value.Status = $Running
-                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
-
-                    }else{
-                       # the operation was not sucess. Set current only the today's date to indicate a failure. The next run, will use sucessful to carry on.
-                        $property.Value.Current = $Value 
-                        $property.Value.Status = $OpsStatus
-                        $property.Value.RoboCopyExitCode = $ErrCode
-                        $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
-                        $property.Value.OpsErrDesc = $Msg
-                    }
-
-                }
-            }
-            # Close the json file
-            $file | ConvertTo-Json | Out-File -FilePath $OpsFile -Encoding utf8 -Force
+        Add-content $MainLogFile -value $LogMsg
     }
     catch {
-        WriteJson $ServerName $LogTime $false  "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"        
+           WriteMainLog $SvrName "WriteMainLog" $LogTime ([OpsStatus]::Complete) $lastexitcode "Success in the operation of the Processing"
     }
 }
 Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $DestDir)
@@ -218,7 +189,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         {
              WriteJson $ServerName $LogTime ([OpsStatus]::Warnings) $lastexitcode $lastExitDesc $errMsg
         }
-
+        WriteMainLog $SvrName "ProcessRoboCopy" $LogTime ([OpsStatus]::Complete) $lastexitcode "Success in the operation of the Processing"
         
         
     }
@@ -228,6 +199,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         $LogTime = (Get-Date).ToString('yyyyMMdd')
          $lastExitDesc = GetRoboCopyCodeDsc  $lastexitcode
         WriteJson $ServerName $LogTime ([OpsStatus]::Exception)  $lastexitcode  $lastExitDesc "$ErrorMsg :Date-$LogTime , The path or file was not found: [$SourceDir]"
+        WriteMainLog $SvrName "ProcessRoboCopy" $LogTime ([OpsStatus]::Exception) $lastexitcode "The path or file was not found: [$SourceDir]"
     
     }
     catch [System.IO.IOException]
@@ -236,7 +208,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         $LogTime = (Get-Date).ToString('yyyyMMdd') 
         $lastExitDesc = GetRoboCopyCodeDsc  $lastexitcode
         WriteJson $ServerName $LogTime ([OpsStatus]::Exception)   $lastexitcode $lastExitDesc "$ErrorMsg :Date-$LogTime , IO error exception has occured."
-    
+        WriteMainLog $SvrName "ProcessRoboCopy" $LogTime ([OpsStatus]::Exception) $lastexitcode "IO error exception has occured."
 
     }
     # --- General Error
@@ -245,7 +217,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         # there was a failure. 
         $LogTime = (Get-Date).ToString('yyyyMMdd')
         WriteJson $ServerName $LogTime ([OpsStatus]::Exception)   $lastexitcode  $lastExitDesc "$ErrorMsg :Date-$LogTime , Robocopy operation resulted in an error."
-        
+        WriteMainLog $SvrName "ProcessRoboCopy" $LogTime ([OpsStatus]::Exception) $lastexitcode "Robocopy operation resulted in an error."
     }
 }
 
@@ -266,10 +238,10 @@ try{
            ProcessRoboCopy $SvrName $SourceDir $DestDir
            $LogTime = (Get-Date).ToString('yyyyMMdd')
         }
-    WriteMainLog $SvrName $LogTime ([OpsStatus]::Complete) $lastexitcode 
+    WriteMainLog $SvrName $LogTime ([OpsStatus]::Complete) $lastexitcode "Success in the operation of the Processing"
     }
  
 catch {
             $LogTime = (Get-Date).ToString('yyyyMMdd')
-            WriteMainLog $SvrName $LogTime ([OpsStatus]::Exception) $lastexitcode 
+            WriteMainLog $SvrName $LogTime ([OpsStatus]::Exception) $lastexitcode "Failure in the operation of the Processing"
 }
