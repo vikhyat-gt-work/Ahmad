@@ -1,0 +1,62 @@
+﻿{
+    "1":  {
+              "ServerName":  "Server001",
+              "UUID":  "e468af7e-81f4-4db5-9149-2109b3c3594e",
+              "SourceDir":  "C:\\Windows\\System32",
+              "DestDir":  "C:\\Testing\\LocalDestFileShare",
+              "Successful":  "18710101",
+              "Current":  "20190906",
+              "RoboCopyExitCode":  "9",
+              "RoboCopyErrDesc":  "Unknown Error code",
+              "OpsErrDesc":  "",
+              "Status":  "Warnings"
+          },
+    "2":  {
+              "ServerName":  "Server002",
+              "UUID":  "d742a53b-6e6a-49d2-8b9e-c5e4bd0f34d4",
+              "SourceDir":  "C:\\Windows\\Microsoft.NET",
+              "DestDir":  "C:\\Testing\\LocalDestFileShare",
+              "Successful":  "20190906",
+              "Current":  "20190906",
+              "RoboCopyExitCode":  "1",
+              "RoboCopyErrDesc":  "No errors occurred, and no copying was done. The source and destination directory trees are completely synchronized.",
+              "OpsErrDesc":  "",
+              "Status":  null
+          },
+    "3":  {
+              "ServerName":  "Server003",
+              "UUID":  "9fad2d74-1a22-4130-ab64-6beaafc1b4df",
+              "SourceDir":  "C:\\Windows\\ServiceProfiles",
+              "DestDir":  "C:\\Testing\\LocalDestFileShare",
+              "Successful":  "18710101",
+              "Current":  "20190906",
+              "RoboCopyExitCode":  "9",
+              "RoboCopyErrDesc":  "Unknown Error code",
+              "OpsErrDesc":  "",
+              "Status":  "Warnings"
+          },
+    "4":  {
+              "ServerName":  "Server004",
+              "UUID":  "03b8bf05-7a61-4599-9c61-aa883892bef2",
+              "SourceDir":  "C:\\Program Files",
+              "DestDir":  "C:\\Testing\\LocalDestFileShare",
+              "Successful":  "18710101",
+              "Current":  "20190906",
+              "RoboCopyExitCode":  "11",
+              "RoboCopyErrDesc":  "Unknown Error code",
+              "OpsErrDesc":  "",
+              "Status":  "Warnings"
+          },
+    "5":  {
+              "ServerName":  "Server005",
+              "UUID":  "65f92e0e-e23a-4ce1-9206-5c2f24425c86",
+              "SourceDir":  "C:\\Windows\\security",
+              "DestDir":  "C:\\Testing\\LocalDestFileShare",
+              "Successful":  "20190906",
+              "Current":  "20190906",
+              "RoboCopyExitCode":  "1",
+              "RoboCopyErrDesc":  "No errors occurred, and no copying was done. The source and destination directory trees are completely synchronized.",
+              "OpsErrDesc":  "",
+              "Status":  null
+          }
+}

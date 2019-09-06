@@ -98,6 +98,7 @@ Function ReadJson ([String] $ServerName)
 }
 
 Function WriteJson ([String] $ServerName,
+                    [String] $myUUID ,
                     [String] $Value ,
                     [String] $OpsStatus,
                     [String] $ErrCode,
@@ -112,16 +113,18 @@ Function WriteJson ([String] $ServerName,
 
                 if ($property.Value.ServerName -eq $ServerName){
 
-                    if ($OpsStatus -eq $Sucess){
+                    if ($OpsStatus -eq ([OpsStatus]::Complete)){
                         # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
+                        $property.Value.UUID = $myUUID
                         $property.Value.Successful = $Value 
                         $property.Value.Current = $Value 
                         $property.Value.Status = $Sucess
                         $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
 
                     }
-                    elseif ($OpsStatus -eq $Running){
+                    elseif ($OpsStatus -eq ([OpsStatus]::Running)){
                         # the operation was a sucess. Set current and sucessful to the same value indicating the sucess
+                        $property.Value.UUID = $myUUID
                         $property.Value.Current = $Value 
                         $property.Value.Status = $Running
                         $property.Value.RoboCopyErrDesc = $RoboCopyErrDesc
@@ -160,7 +163,6 @@ Function WriteMainLog ([String] $ServerName,
         $LogMsg  = "TimeStamp: $DateTime  `r`nServer Name:  $ServerName `r`nFunction or Module Name: $Function_ModuleName `r`nStatus: $OpsStatus `r`nPossible Error Code: $ErrCode `r`nMessage: $Msg `r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++`r`n+++++++++++++++++++++++++++++++++"
 
         Add-content $MainLogFile -value $LogMsg
-        WriteMainLog $SvrName "WriteMainLog" $LogTime ([OpsStatus]::Complete) $lastexitcode "Successful operation."
     }
     catch {
         WriteMainLog $SvrName "WriteMainLog" $LogTime ([OpsStatus]::Complete) $lastexitcode "The operation resulted in an error."
@@ -175,14 +177,20 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
         # --- By inclusing /MT:32, we are dicating a thread of 32. to change the number of retries, use the /R switch, 
         #and to change the wait time between retries, use the /W switch. 
 
+        # --- Create a new UUID for the RoboCopy instance
+        $MyUUID = [guid]::NewGuid()
+
         $LogTime = (Get-Date).ToString('yyyyMMdd')
         # --- Set the start point of the process
-        WriteJson $ServerName $LogTime ([OpsStatus]::Running) 0 0
+        WriteJson $ServerName $MyUUID  $LogTime ([OpsStatus]::Running) 0 0
+
          
-        $ServerLogFile = $ServerName + $LogFile
+        $ServerLogFile = $ServerName + "_" + $MyUUID + "_" + $LogFile
         $ServerLogFile = $LogfileDir + $ServerLogFile
 
+
         #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
+        $DestDir = $DestDir + "\\$ServerName"
         robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$ServerLogFile
         
         $LogTime = (Get-Date).ToString('yyyyMMdd')
@@ -190,11 +198,11 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
           $lastExitDesc = GetRoboCopyCodeDsc  $lastexitcode
         if ($lastexitcode -eq 0)
         {
-              WriteJson $ServerName $LogTime ([OpsStatus]::Complete) $lastexitcode $lastExitDesc $errMsg
+              WriteJson $ServerName $MyUUID $LogTime ([OpsStatus]::Complete) $lastexitcode $lastExitDesc $errMsg
         }
         else
         {
-             WriteJson $ServerName $LogTime ([OpsStatus]::Warnings) $lastexitcode $lastExitDesc $errMsg
+             WriteJson $ServerName $MyUUID $LogTime ([OpsStatus]::Warnings) $lastexitcode $lastExitDesc $errMsg
         }
         WriteMainLog $SvrName "ProcessRoboCopy" $LogTime ([OpsStatus]::Complete) $lastexitcode "Success in the operation of the Processing"
     }
