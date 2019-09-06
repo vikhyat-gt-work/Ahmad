@@ -191,7 +191,7 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
 
         #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
         $DestDir = $DestDir + "\\$ServerName"
-        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB /COPYALL /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$ServerLogFile
+        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB  /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$ServerLogFile
         
         $LogTime = (Get-Date).ToString('yyyyMMdd')
         
