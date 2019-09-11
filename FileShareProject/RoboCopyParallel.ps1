@@ -14,14 +14,22 @@ Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 Write-Output "++++++++++++++++++++++++++++++++"
 
-$OpsFile = 'C:\Temp\'+"Ops_LogTime.json"
+$OpsFile = "Ops_LogTime.json"
+$FolderPath=Get-Location
+$OpsFile = "$PSScriptRoot\$OpsFile"
 $logFile = "_JSON_FileShare_$LogTime.log"
+$LogTime = (Get-Date).ToString('yyyyMMdd')
 $MainLogFile = "MainLog_$LogTime.log" 
-$LogfileDir = 'C:\Temp\' 
+$LogfileDir = 'C:\temp\RoboCopyLogs\'
 $RefDate = '18710101'
-
+$TempSource = '\\svcdr\g$\SVNATT\2016\F\DATA\Nmc'
 
 $MainLogFile = $LogfileDir + $MainLogFile
+$IPHostName = "svcdr"
+$IPCUser = "gtca\backupadm"            # Authentication 
+$IPCPwd  = "ChangeMeNow#1"               #                for IPC$ share
+NET USE \\$IPHostName\IPC$ /u:$IPCUser $IPCPwd
+
 enum OpsStatus
 {
     Complete
@@ -62,6 +70,7 @@ function GetRoboCopyCodeDsc ([string] $errCode){
 Function InitJson ([String] $ServerName)
 {
     try{
+        
         $file = ([System.IO.File]::ReadAllText($OpsFile)  | ConvertFrom-Json)
 
         foreach ($property in $file.PSObject.Properties) {
@@ -190,8 +199,9 @@ Function ProcessRoboCopy ([String] $ServerName, [String] $SourceDir , [String] $
 
 
         #throw [System.IO.FileNotFoundException] "$A fuilure has occured."
-        $DestDir = $DestDir + "\\$ServerName"
-        robocopy.exe $SourceDir $DestDir  /MAXAGE:$SucessTime /ZB  /MIR /V /NP  /R:1 /W:1 /B /MT:132 /Tee /LOG:$ServerLogFile
+        $DestDir = $DestDir + "$ServerName"
+        robocopy.exe $SourceDir $DestDir /COPYALL /MAXAGE:$SucessTime /MAX:100000000 /ZB /W:0 /R:0 /MIR /V /NP /B  /Tee  /XF *.exe *.pst *.vbs /LOG:$ServerLogFile        
+
         
         $LogTime = (Get-Date).ToString('yyyyMMdd')
         
@@ -245,7 +255,8 @@ try{
     foreach ($property in $file.PSObject.Properties) {
  
            $SvrName = $property.Value.ServerName
-           $SourceDir = $property.Value.SourceDir
+          # $SourceDir = $property.Value.SourceDir
+           $SourceDir =$TempSource
            $DestDir = $property.Value.DestDir
            # Looping through the list of servers within the json file and call the RoboProcess 
            ProcessRoboCopy $SvrName $SourceDir $DestDir
