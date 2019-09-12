@@ -1,13 +1,13 @@
 ﻿{
     "1":  {
               "ServerName":  "Server001",
-              "UUID":  "26c7afda-2871-41e1-946d-1bf4b9875677",
+              "UUID":  "d4833429-feec-4269-b050-08f0e24803de",
               "SourceDir":  "\\svantigo\\f\\backup",
               "DestDir":  "C:\\Testing\\RobocopyFiles",
-              "RoboCopyExitCode":  "16",
+              "RoboCopyExitCode":  "3",
               "RoboCopyErrDesc":  "0",
               "Successful":  "18710101",
-              "Current":  "20190911",
+              "Current":  "20190912",
               "OpsErrDesc":  "",
               "Status":  null
           }

@@ -22,14 +22,9 @@ $LogTime = (Get-Date).ToString('yyyyMMdd')
 $MainLogFile = "MainLog_$LogTime.log" 
 $LogfileDir = 'C:\temp\RoboCopyLogs\'
 $RefDate = '18710101'
-$TempSource = '\\svcdr\g$\SVNATT\2016\F\DATA\Nmc'
+$TempSource = '\\svcdr\g$\svnatt\2016\F\DATA'
 
 $MainLogFile = $LogfileDir + $MainLogFile
-$IPHostName = "svcdr"
-$IPCUser = "gtca\backupadm"            # Authentication 
-$IPCPwd  = "ChangeMeNow#1"               #                for IPC$ share
-NET USE \\$IPHostName\IPC$ /u:$IPCUser $IPCPwd
-
 enum OpsStatus
 {
     Complete
